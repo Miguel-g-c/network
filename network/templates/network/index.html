@@ -14,6 +14,9 @@
                 username : '{{user.username}}'
             };
 
+            const LEFT_PAGE = 'LEFT';
+            const RIGHT_PAGE = 'RIGHT';
+
             function range(size) {
                 return [...Array(size).keys()].map(i => i + 1);
             };
@@ -99,11 +102,89 @@
                 constructor(props) {
                     super(props);
                     this.state = {
-                        currentPage = 1,
-                        numberOfPages = this.props.numberOfPages,
-                        left = false,
-                        rigth = true
+                        currentPage: 1,
+                        numberOfPages: this.props.numberOfPages
                     }
+                }
+
+                fetchPageNumbers = () => {
+                    const numberOfPages = this.state.numberOfPages;
+                    const currentPage = this.state.currentPage;
+                    var pages = [];
+
+                    if (currentPage === 1) {
+                        pages = [...range(numberOfPages), RIGHT_PAGE];
+                    } else if (currentPage === numberOfPages) {
+                        pages = [LEFT_PAGE, ...range(numberOfPages)];
+                    } else {
+                        pages = [LEFT_PAGE, ...range(numberOfPages), RIGHT_PAGE];
+                    }
+
+                    return pages
+                }
+
+                render() {
+                    if (this.numberOfPages === 1) return null;
+
+                    const currentPage = this.state.currentPage;
+                    const pages = this.fetchPageNumbers();
+
+                    return(
+                        <nav aria-label="Posts Pagination">
+                            <ul className="pagination">
+                                {pages.map((page, index) => {
+
+                                    if (page === LEFT_PAGE) return (
+                                        <li key={index} className="page-item">
+                                            <a className="page-link" href="#" aria-label="Previous" onClick={this.handleMoveLeft}>
+                                                <span aria-hidden="true">&laquo;</span>
+                                                <span className="sr-only">Previous</span>
+                                            </a>
+                                        </li>
+                                    );
+
+                                    if (page === RIGHT_PAGE) return (
+                                        <li key={index} className="page-item">
+                                            <a className="page-link" href="#" aria-label="Next" onClick={this.handleMoveRight}>
+                                                <span aria-hidden="true">&raquo;</span>
+                                                <span className="sr-only">Next</span>
+                                            </a>
+                                        </li>
+                                    );
+
+                                    return (
+                                        <li key={index} className={`page-item${ currentPage === page ? ' active' : ''}`}>
+                                            <a className="page-link" href="#" onClick={this.handleClick(page)}>{page}</a>
+                                        </li>
+                                    );
+                                })}
+                            </ul>
+                        </nav>
+                    )
+                }
+
+                handleClick = page => event => {
+                    event.preventDefault();
+                    this.setState({
+                        currentPage: page
+                    });
+                    this.props.onPageChanged(page);
+                }
+
+                handleMoveLeft = event => {
+                    event.preventDefault();
+                    this.setState({
+                        currentPage: this.state.currentPage - 1
+                    });
+                    this.props.onPageChanged(this.state.currentPage - 1);
+                }
+
+                handleMoveRight = event => {
+                    event.preventDefault();
+                    this.setState({
+                        currentPage: this.state.currentPage + 1
+                    });
+                    this.props.onPageChanged(this.state.currentPage + 1);
                 }
             }
 
@@ -319,7 +400,8 @@
                         <div>
                             <Navbar displayAllPosts = {this.displayAllPosts} displayFollowing = {this.displayFollowing} displayProfile = {this.displayProfile} />
                             <NewPost displayAllPosts = {this.displayAllPosts} />
-                            {/* <PostBox postBox = "allposts" /> */}                            
+                            {/* <PostBox postBox = "allposts" /> */}
+                            <Paginator numberOfPages={5} />                           
                         </div>
                     );
                 }
