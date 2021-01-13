@@ -1,0 +1,40 @@
+.navbar-brand {
+    cursor: pointer;
+}
+
+.nav-link {
+    cursor: pointer;
+}
+
+.like-button {
+    cursor: pointer;
+    width: 20px;
+    vertical-align: middle;
+}
+
+.like-counter {
+    margin-left: 2px;
+    font-size: 20px;
+    font-weight: bold;
+    vertical-align: middle;
+}
+
+#new-post-container {
+    margin-top: 25px;
+}
+
+#post-container {
+    margin-top: 10px;
+}
+
+#post-content {
+    margin: 0%;
+}
+
+#post-timestamp {
+    font-size: small;
+}
+
+#new-post-button {
+    margin-top: 5px;
+}
