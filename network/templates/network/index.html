@@ -73,7 +73,48 @@
                     })
                     .catch(error => console.log('Error:', error));
                 }
-            };
+            }
+
+            class FollowButton extends React.Component {
+                constructor(props) {
+                    super(props);
+                    this.state = {
+                        followedByUser: this.props.followedByUser
+                    }
+                }
+
+                isUserProfile = () => {return this.props.username === context.username};
+
+                render() {
+                    
+                    if (this.isUserProfile()) {
+                        return null
+                    } else if (this.state.followedByUser) {
+                        return (
+                            <button id="follow-button" type="button" className="btn btn-outline-danger btn-sm" onClick={this.handleClick}>Unfollow</button>
+                        )
+                    } else {
+                        return (
+                            <button id="follow-button" type="button" className="btn btn-outline-success btn-sm" onClick={this.handleClick}>Follow</button>
+                        )
+                    };
+                }
+
+                handleClick = event => {
+                    this.setState({
+                        followedByUser: !this.state.followedByUser
+                    });
+
+                    fetch(`/profile/${this.props.username}`, {
+                        method: "PUT",
+                        body: JSON.stringify({
+                            follower: context.username,
+                            follow: !this.state.followedByUser
+                        })
+                    })
+                    .catch(error => console.log('Error:', error));                    
+                }
+            }
             
             class Post extends React.Component {
 
@@ -87,7 +128,7 @@
                             <div className="row">
                                 <div className="card align-self-center col-10">
                                     <div className="card-body">
-                                        <h5 className="card-title">{`@${this.props.username}`}</h5>
+                                        <h5 id="profile-link" className="card-title" onClick={() => this.props.displayProfile(this.props.username)}>{`@${this.props.username}`}</h5>
                                         <p className="card-text" id="post-content">{this.props.postContent}</p>
                                         <p className="card-text text-muted" id="post-timestamp">{this.props.timestamp}</p>
                                         <LikeButton postID = {this.props.postID} likedByUser = {this.props.likedByUser} numberOfLikes = {this.props.numberOfLikes} />
@@ -232,7 +273,7 @@
                     const postsArray = posts.map(post => 
                         <Post postID = {post.id} username = {post.username} postContent = {post.post}
                               timestamp = {post.timestamp} likedByUser = {post.liked_by_user} 
-                              numberOfLikes = {post.likes} key = {post.id} />
+                              numberOfLikes = {post.likes} key = {post.id} displayProfile = {this.props.displayProfile} />
                     );
 
                     return(
@@ -350,18 +391,20 @@
                     const username = this.props.username;
                     const numberOfFollowers = profile.followers_number;
                     const numberOfFollowed = profile.following_number;
+                    const followedByUser = profile.followed_by_user;
 
                     return(
                         <div className="container pt-4" id="profile-container">
                             <div className="row">
                                 <div className="col">
                                     <h1 id="profile-title">{`${username}'s profile`}</h1>
+                                    <FollowButton followedByUser={followedByUser} username={username} key={username}/>
                                 </div>
                             </div>
                             <div className="row pt-2">
                                 <div className="col">
-                                    <h4 id="profile-title">Followers <span className="badge badge-info">{numberOfFollowers}</span></h4>
-                                    <h4 id="profile-title">Following <span className="badge badge-info">{numberOfFollowed}</span></h4>
+                                    <h4 className="text-seconday">Followers <span className="badge badge-info">{numberOfFollowers}</span></h4>
+                                    <h4 className="text-seconday">Following <span className="badge badge-info">{numberOfFollowed}</span></h4>
                                 </div>
                             </div>
                         </div>
@@ -389,7 +432,7 @@
                             <ul className="navbar-nav mr-auto">
                                 {isLoggedIn
                                     ? <li className={`nav-item${ this.state.active === 'profile' ? ' active' : ''}`}>
-                                        <a className="nav-link" onClick={() => {this.setState({active:'profile'}); this.props.displayProfile();}}><strong>{username}</strong></a>
+                                        <a className="nav-link" onClick={() => {this.setState({active:'profile'}); this.props.displayProfile(username);}}><strong>{username}</strong></a>
                                     </li>
                                     : null
                                 }
@@ -417,18 +460,6 @@
                         </nav>
                     );
                 }
-
-                handleClick = activePage => {
-                    console.log('clicking');
-                    console.log(activePage)
-                    if (activePage==='allposts') {
-                        this.props.displayAllPosts;
-                    } else if (activePage==='profile') {
-                        this.props.displayProfile;
-                    } else {this.props.displayFollowing}
-
-                    
-                }
             };
 
             class App extends React.Component {
@@ -437,7 +468,8 @@
                     super(props);
                     this.state = {
                         app_page: "All posts",
-                        isLoggedIn: context.isLoggedIn()
+                        isLoggedIn: context.isLoggedIn(),
+                        profileUsername: context.username
                     };
 
                     this.displayAllPosts = this.displayAllPosts.bind(this);
@@ -453,9 +485,10 @@
                     });
                 };
 
-                displayProfile() {
+                displayProfile(username) {
                     this.setState({
-                        app_page: "Profile"
+                        app_page: "Profile",
+                        profileUsername: username
                     });
                 };
 
@@ -471,7 +504,7 @@
                             <div>
                                 <Navbar displayAllPosts = {this.displayAllPosts} displayFollowing = {this.displayFollowing} displayProfile = {this.displayProfile} />
                                 <h3 className="text-center pt-4">Login or register to start posting!</h3>
-                                <PostBox postBox = "allposts" key="allposts" />
+                                <PostBox postBox = "allposts" key="allposts" displayProfile = {this.displayProfile} />
                             </div>
                         )
                     } else if (this.state.app_page === "All posts") {
@@ -488,7 +521,7 @@
                         <div>
                             <Navbar displayAllPosts = {this.displayAllPosts} displayFollowing = {this.displayFollowing} displayProfile = {this.displayProfile} />
                             <NewPost displayAllPosts = {this.displayAllPosts} />
-                            <PostBox postBox = "allposts" key="allposts" />                          
+                            <PostBox postBox = "allposts" key="allposts" displayProfile = {this.displayProfile} />                          
                         </div>
                     );
                 }
@@ -497,8 +530,8 @@
                     return (
                         <div>
                             <Navbar displayAllPosts = {this.displayAllPosts} displayFollowing = {this.displayFollowing} displayProfile = {this.displayProfile} />
-                            <Profile username={context.username} />
-                            <PostBox postBox = "profile" username={context.username} key={`profile${context.username}`}/>
+                            <Profile username={this.state.profileUsername} />
+                            <PostBox postBox = "profile" username={this.state.profileUsername} key={`profile${this.state.profileUsername}`} displayProfile = {this.displayProfile} />
                         </div>
                     );
                 }
@@ -507,7 +540,7 @@
                     return (
                         <div>
                             <Navbar displayAllPosts = {this.displayAllPosts} displayFollowing = {this.displayFollowing} displayProfile = {this.displayProfile} />
-                            <PostBox postBox = "following" key={`following${context.username}`} />
+                            <PostBox postBox = "following" key={`following${context.username}`} displayProfile = {this.displayProfile} />
                         </div>
                     );
                 }

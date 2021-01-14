@@ -17,6 +17,8 @@ class Profile(models.Model):
         User, blank = True, related_name = "following"
     )
 
+    #TODO: It is more efficience to use an intermediary model for following relationship (less queries)
+
     def serialize(self):
         return {
             "id": self.id,

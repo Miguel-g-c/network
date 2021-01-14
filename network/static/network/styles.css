@@ -19,7 +19,12 @@
     display: inline;
 }
 
-.profile-title {
+#follow-button {
+    vertical-align: 30%;
+    margin-left: 5px;
+}
+
+#profile-title {
     display: inline;
 }
 
@@ -41,4 +46,8 @@
 
 #new-post-button {
     margin-top: 5px;
+}
+
+#profile-link {
+    cursor: pointer;
 }

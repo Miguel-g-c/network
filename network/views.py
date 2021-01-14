@@ -112,10 +112,10 @@ def post(request, post_id):
                 post.likes.add(request.user)
             else:
                 post.likes.remove(request.user)
-        if data.get("archived") is not None:
-            post.archived = data["archived"]
-        post.save()
-        return HttpResponse(status=204)
+            post.save()
+            return HttpResponse(status=204)
+        else:
+            return HttpResponse(status=406)
 
     # Post must be via GET or PUT
     else:
@@ -136,9 +136,28 @@ def profile(request, username):
     # Return profile contents
     if request.method == "GET":
         response = profile.serialize()
+        response['followed_by_user'] = request.user.username in response['followers']
         return JsonResponse(response)
 
-    # Profile must be via GET
+    # Update profile
+    elif request.method == "PUT":
+        data = json.loads(request.body)
+        if data.get("follower") is not None:
+            if data.get("follow"):
+                profile.followers.add(request.user)
+                profile2 = Profile.objects.get(user=request.user)
+                profile2.following.add(User.objects.get(username=username))
+            else:
+                profile.followers.remove(request.user)
+                profile2 = Profile.objects.get(user=request.user)
+                profile2.following.remove(User.objects.get(username=username))
+            profile.save()
+            profile2.save()
+            return HttpResponse(status=204)
+        else:
+            return HttpResponse(status=406)
+
+    # Profile must be via GET or PUT
     else:
         return JsonResponse({
             "error": "GET request required."
