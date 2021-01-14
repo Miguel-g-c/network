@@ -131,7 +131,7 @@
 
                     return(
                         <nav aria-label="Posts Pagination">
-                            <ul className="pagination">
+                            <ul className="pagination justify-content-center">
                                 {pages.map((page, index) => {
 
                                     if (page === LEFT_PAGE) return (
@@ -193,9 +193,12 @@
                 constructor(props) {
                     super(props);
                     this.state = {
-                        posts: [],
+                        response: [],
                         fetching: true,
+                        currentPage: 1
                     }
+
+                    this.onPageChanged = this.onPageChanged.bind(this);
                 }
 
                 componentDidMount() {
@@ -203,26 +206,62 @@
                     fetch(api)
                     .then(response => response.json())
                     .then(data => this.setState({
-                        posts: data,
+                        response: data,
                         fetching: false,
                     }))
                     .catch(error => console.log('Error:', error));
                 }
 
+                postBoxName() {
+                    if (this.props.postBox === 'allposts') return 'All posts';
+                    else if (this.props.postBox === 'following') return 'Followed users posts';
+                    else return 'My posts'
+                }
+
                 render() {
                     while (this.state.fetching) {
                         return <div>Loading...</div>
-                    }
+                    };
 
-                    const postsArray = this.state.posts.map(post => 
+                    const posts = this.state.response.data[this.state.currentPage];
+                    const totalPosts = this.state.response.num_posts;
+                    const totalPages = this.state.response.num_pages;
+
+                    const postsArray = posts.map(post => 
                         <Post postID = {post.id} username = {post.username} postContent = {post.post}
                               timestamp = {post.timestamp} likedByUser = {post.liked_by_user} 
                               numberOfLikes = {post.likes} key = {post.id} />
                     );
 
                     return(
-                        <div>{postsArray}</div>
+                        <div className="container pt-4" id="postbox-container">
+                            <div className="row">
+                                <div className="col align-self-center">
+                                    <h2 className="postbox-title">{this.postBoxName()}</h2>
+                                </div>
+                            </div>
+                            <div className="row pt-3">
+                                <div className="col align-self-center">
+                                    <h4 className="postbox-title"><strong className="text-seconday">{totalPosts}</strong> Posts</h4>
+                                    <span className="text-seconday pl-4">Page {this.state.currentPage}/{totalPages}</span>
+                                </div>
+                                <div className="col align-self-center">
+                                    <Paginator numberOfPages={totalPages} onPageChanged={this.onPageChanged} />
+                                </div>
+                            </div>
+                            <div className="row pt-2">
+                                <div className="col align-self-center">
+                                    {postsArray}
+                                </div>
+                            </div>
+                        </div>
                     )
+                }
+
+                onPageChanged = page => {
+                    this.setState({
+                        currentPage: page
+                    });
                 }
             }
 
@@ -382,8 +421,8 @@
                         return (
                             <div>
                                 <Navbar displayAllPosts = {this.displayAllPosts} displayFollowing = {this.displayFollowing} displayProfile = {this.displayProfile} />
-                                <h3 className="text-center">Login or register to start posting!</h3>
-                                {/* <PostBox postBox = "allposts" /> */}
+                                <h3 className="text-center pt-4">Login or register to start posting!</h3>
+                                <PostBox postBox = "allposts" />
                             </div>
                         )
                     } else if (this.state.app_page === "All posts") {
@@ -400,8 +439,7 @@
                         <div>
                             <Navbar displayAllPosts = {this.displayAllPosts} displayFollowing = {this.displayFollowing} displayProfile = {this.displayProfile} />
                             <NewPost displayAllPosts = {this.displayAllPosts} />
-                            {/* <PostBox postBox = "allposts" /> */}
-                            <Paginator numberOfPages={5} />                           
+                            <PostBox postBox = "allposts" />                          
                         </div>
                     );
                 }
