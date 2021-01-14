@@ -222,7 +222,7 @@
 
                 render() {
                     while (this.state.fetching) {
-                        return <div>Loading...</div>
+                        return <div></div>
                     };
 
                     const posts = this.state.response.data[this.state.currentPage];
@@ -383,22 +383,22 @@
                     const username = context.username;
                     return (
                         <nav className="navbar navbar-expand-lg navbar-light bg-light">
-                            <a className="navbar-brand" onClick={this.props.displayAllPosts}>Network</a>
+                            <span className="navbar-brand">Network</span>
                         
                             <div>
                             <ul className="navbar-nav mr-auto">
                                 {isLoggedIn
-                                    ? <li className="nav-item">
-                                        <a className="nav-link" onClick={this.props.displayProfile}><strong>{username}</strong></a>
+                                    ? <li className={`nav-item${ this.state.active === 'profile' ? ' active' : ''}`}>
+                                        <a className="nav-link" onClick={() => {this.setState({active:'profile'}); this.props.displayProfile();}}><strong>{username}</strong></a>
                                     </li>
                                     : null
                                 }
-                                <li className="nav-item">
-                                    <a className="nav-link" onClick={this.props.displayAllPosts}>All Posts</a>
+                                <li className={`nav-item${ this.state.active === 'allposts' ? ' active' : ''}`}>
+                                    <a className="nav-link" onClick={() => {this.props.displayAllPosts(); this.setState({active:'allposts'});}}>All Posts</a>
                                 </li>
                                 {isLoggedIn
-                                    ? <li className="nav-item">
-                                        <a className="nav-link" onClick={this.props.displayFollowing}>Following</a>
+                                    ? <li className={`nav-item${ this.state.active === 'following' ? ' active' : ''}`}>
+                                        <a className="nav-link" onClick={() => {this.props.displayFollowing(); this.setState({active:'following'});}}>Following</a>
                                     </li>
                                     : <li className="nav-item">
                                         <a className="nav-link" href="{% url 'login' %}">Log In</a>
@@ -416,7 +416,19 @@
                             </div>
                         </nav>
                     );
-                };
+                }
+
+                handleClick = activePage => {
+                    console.log('clicking');
+                    console.log(activePage)
+                    if (activePage==='allposts') {
+                        this.props.displayAllPosts;
+                    } else if (activePage==='profile') {
+                        this.props.displayProfile;
+                    } else {this.props.displayFollowing}
+
+                    
+                }
             };
 
             class App extends React.Component {
