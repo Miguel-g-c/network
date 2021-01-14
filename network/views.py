@@ -14,23 +14,25 @@ from .models import User, Profile, Post
 def index(request):
     return render(request, "network/index.html")
 
-def postbox(request, postbox):
+def postbox(request, postbox, username=None):
 
     # Filter posts returned based on postbox
     if postbox == "allposts":
         posts = Post.objects.all()
+
     elif postbox == "following":
         if request.user.is_authenticated:
             following = Profile.objects.get(user=request.user).following.all()
             posts = Post.objects.filter(user__in=following)
         else:
             return JsonResponse({"error": "Acces forbidden."}, status=400)
-    elif postbox == "profile":
+
+    elif postbox == "profile" and username is not None:
         if request.user.is_authenticated:
-            following = Profile.objects.get(user=request.user).following.all()
-            posts = Post.objects.filter(user__in=following)
+            posts = Post.objects.filter(user__username=username)
         else:
             return JsonResponse({"error": "Acces forbidden."}, status=400)
+
     else:
         return JsonResponse({"error": "Invalid postbox."}, status=400)
 
@@ -119,6 +121,27 @@ def post(request, post_id):
     else:
         return JsonResponse({
             "error": "GET or PUT request required."
+        }, status=400)
+
+@csrf_exempt
+@login_required
+def profile(request, username):
+
+    # Query for requested post
+    try:
+        profile = Profile.objects.get(user__username=username)
+    except Profile.DoesNotExist:
+        return JsonResponse({"error": "Profile not found."}, status=404)
+
+    # Return profile contents
+    if request.method == "GET":
+        response = profile.serialize()
+        return JsonResponse(response)
+
+    # Profile must be via GET
+    else:
+        return JsonResponse({
+            "error": "GET request required."
         }, status=400)
 
 def login_view(request):

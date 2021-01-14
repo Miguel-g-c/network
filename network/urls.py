@@ -13,4 +13,6 @@ urlpatterns = [
     path("posting", views.new_post, name="posting"),
     path("post/<int:post_id>", views.post, name="post"),
     path("posts/<str:postbox>", views.postbox, name="postbox"),
+    path("posts/<str:postbox>/<str:username>", views.postbox, name="postbox"),
+    path("profile/<str:username>", views.profile, name="profile"),
 ]

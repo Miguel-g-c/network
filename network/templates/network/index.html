@@ -32,17 +32,20 @@
                 }
 
                 render() {
-                    if (this.state.liked_by_user) {
+                    const isLoggedIn = context.isLoggedIn();
+                    if (!isLoggedIn) {
+                        return null
+                    } else if (this.state.liked_by_user) {
                         return this.renderLikedButton()
                     } else {
                         return this.renderUnlikedButton()
-                    }
+                    };
                 }
 
                 renderLikedButton() {
                     return(
                         <div>
-                            <img className="like-button" src={'../../static/network/liked.png'} onClick={this.liking} />
+                            <img className="like-button" src={'../../static/network/liked.png'} onClick={this.handleClick} />
                             <span className="like-counter">{this.state.number_of_likes}</span>
                         </div>
                     )
@@ -51,13 +54,13 @@
                 renderUnlikedButton() {
                     return(
                         <div>
-                            <img className="like-button" src={'../../static/network/unliked.png'} onClick={this.liking} />
+                            <img className="like-button" src={'../../static/network/unliked.png'} onClick={this.handleClick} />
                             <span className="like-counter">{this.state.number_of_likes}</span>
                         </div>
                     )
                 }
 
-                liking = (event) => {
+                handleClick = (event) => {
                     this.setState({
                         liked_by_user: !this.state.liked_by_user,
                         number_of_likes: this.state.number_of_likes -2 * this.state.liked_by_user + 1
@@ -70,7 +73,6 @@
                     })
                     .catch(error => console.log('Error:', error));
                 }
-
             };
             
             class Post extends React.Component {
@@ -95,7 +97,6 @@
                         </div>
                     )
                 }
-
             }
 
             class Paginator extends React.Component {
@@ -124,7 +125,7 @@
                 }
 
                 render() {
-                    if (this.numberOfPages === 1) return null;
+                    if (this.state.numberOfPages === 1) return null;
 
                     const currentPage = this.state.currentPage;
                     const pages = this.fetchPageNumbers();
@@ -195,14 +196,15 @@
                     this.state = {
                         response: [],
                         fetching: true,
-                        currentPage: 1
+                        currentPage: 1,
                     }
 
                     this.onPageChanged = this.onPageChanged.bind(this);
                 }
 
                 componentDidMount() {
-                    const api = `/posts/${this.props.postBox}`;
+                    const api = `/posts/${this.props.postBox}/${this.props.username}`;
+
                     fetch(api)
                     .then(response => response.json())
                     .then(data => this.setState({
@@ -215,7 +217,7 @@
                 postBoxName() {
                     if (this.props.postBox === 'allposts') return 'All posts';
                     else if (this.props.postBox === 'following') return 'Followed users posts';
-                    else return 'My posts'
+                    else return 'Profile posts'
                 }
 
                 render() {
@@ -329,16 +331,51 @@
                 constructor(props) {
                     super(props);
                     this.state = {
-                        app_page: "All posts"
+                        response: {}
                     };
                 }
 
+                componentDidMount() {
+                    const api = `/profile/${this.props.username}`;
+                    fetch(api)
+                    .then(response => response.json())
+                    .then(data => this.setState({
+                        response: data
+                    }))
+                    .catch(error => console.log('Error:', error));
+                }
+
+                render () {
+                    const profile = this.state.response;
+                    const username = this.props.username;
+                    const numberOfFollowers = profile.followers_number;
+                    const numberOfFollowed = profile.following_number;
+
+                    return(
+                        <div className="container pt-4" id="profile-container">
+                            <div className="row">
+                                <div className="col">
+                                    <h1 id="profile-title">{`${username}'s profile`}</h1>
+                                </div>
+                            </div>
+                            <div className="row pt-2">
+                                <div className="col">
+                                    <h4 id="profile-title">Followers <span className="badge badge-info">{numberOfFollowers}</span></h4>
+                                    <h4 id="profile-title">Following <span className="badge badge-info">{numberOfFollowed}</span></h4>
+                                </div>
+                            </div>
+                        </div>
+                    )
+                }
             };
 
             class Navbar extends React.Component {
 
                 constructor(props) {
                     super(props);
+                    this.state = {
+                        active: 'allposts'
+                    };
                 }
 
                 render() {
@@ -422,7 +459,7 @@
                             <div>
                                 <Navbar displayAllPosts = {this.displayAllPosts} displayFollowing = {this.displayFollowing} displayProfile = {this.displayProfile} />
                                 <h3 className="text-center pt-4">Login or register to start posting!</h3>
-                                <PostBox postBox = "allposts" />
+                                <PostBox postBox = "allposts" key="allposts" />
                             </div>
                         )
                     } else if (this.state.app_page === "All posts") {
@@ -439,7 +476,7 @@
                         <div>
                             <Navbar displayAllPosts = {this.displayAllPosts} displayFollowing = {this.displayFollowing} displayProfile = {this.displayProfile} />
                             <NewPost displayAllPosts = {this.displayAllPosts} />
-                            <PostBox postBox = "allposts" />                          
+                            <PostBox postBox = "allposts" key="allposts" />                          
                         </div>
                     );
                 }
@@ -448,7 +485,8 @@
                     return (
                         <div>
                             <Navbar displayAllPosts = {this.displayAllPosts} displayFollowing = {this.displayFollowing} displayProfile = {this.displayProfile} />
-                            <p id="profile">{context.username}'s Profile!</p>
+                            <Profile username={context.username} />
+                            <PostBox postBox = "profile" username={context.username} key={`profile${context.username}`}/>
                         </div>
                     );
                 }
@@ -457,7 +495,7 @@
                     return (
                         <div>
                             <Navbar displayAllPosts = {this.displayAllPosts} displayFollowing = {this.displayFollowing} displayProfile = {this.displayProfile} />
-                            <p id="following-posts">Following posts!</p>
+                            <PostBox postBox = "following" key={`following${context.username}`} />
                         </div>
                     );
                 }

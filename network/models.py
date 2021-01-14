@@ -21,8 +21,8 @@ class Profile(models.Model):
         return {
             "id": self.id,
             "username": self.user.username,
-            "followers": [user for user in self.followers.all()],
-            "following": [user for user in self.following.all()],
+            "followers": [user.username for user in self.followers.all()],
+            "following": [user.username for user in self.following.all()],
             "followers_number": self.followers.all().count(),
             "following_number": self.following.all().count()
         }

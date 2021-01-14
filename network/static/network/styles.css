@@ -23,6 +23,10 @@
     display: inline;
 }
 
+.profile-title {
+    display: inline;
+}
+
 #new-post-container {
     margin-top: 25px;
 }
