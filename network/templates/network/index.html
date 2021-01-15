@@ -112,7 +112,9 @@
                             follow: !this.state.followedByUser
                         })
                     })
-                    .catch(error => console.log('Error:', error));                    
+                    .catch(error => console.log('Error:', error));
+                    
+                    this.props.updateProfile();
                 }
             }
             
@@ -120,16 +122,49 @@
 
                 constructor(props) {
                     super(props);
+                    this.state = {
+                        editing: false,
+                        postContent: this.props.postContent,
+                    }
                 }
 
+                isUserPost = () => {return this.props.username === context.username}
+
                 render() {
+
+                    while (this.state.editing) {
+                        return(
+                            <div className="container" id="post-container">
+                                <div className="row">
+                                    <div className="card align-self-center col-10">
+                                        <div className="card-body">
+                                            <h5 className="card-title">{`@${this.props.username}`}</h5>
+                                                <form id="new-post">
+                                                    <textarea className="form-control" id="edit-post-body" onChange={this.updatePostContent}
+                                                              value={this.state.postContent}></textarea>
+                                                    <button className="btn btn-outline-success btn-sm" id="new-post-button" onClick={this.edited}>Edit</button>
+                                                    <button className="btn btn-outline-danger btn-sm ml-1" id="new-post-button" onClick={this.editing}>Cancel</button>
+                                                    <p className="card-text text-muted" id="post-timestamp">Posted on {this.props.timestamp}</p>
+                                                </form>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        )
+                    }
+
                     return(
                         <div className="container" id="post-container">
                             <div className="row">
                                 <div className="card align-self-center col-10">
                                     <div className="card-body">
                                         <h5 id="profile-link" className="card-title" onClick={() => this.props.displayProfile(this.props.username)}>{`@${this.props.username}`}</h5>
-                                        <p className="card-text" id="post-content">{this.props.postContent}</p>
+                                        {this.isUserPost()
+                                            ? <button type="button" className="btn btn-outline-secondary btn-sm float-right"
+                                                      onClick={this.editing}>Edit</button>
+                                            : null
+                                        }
+                                        <p className="card-text" id="post-content">{this.state.postContent}</p>
                                         <p className="card-text text-muted" id="post-timestamp">{this.props.timestamp}</p>
                                         <LikeButton postID = {this.props.postID} likedByUser = {this.props.likedByUser} numberOfLikes = {this.props.numberOfLikes} />
                                     </div>
@@ -137,6 +172,40 @@
                             </div>
                         </div>
                     )
+                }
+
+                editing = event => {
+                    event.preventDefault();
+                    this.setState({
+                        editing: !this.state.editing
+                    });
+                }
+
+                updatePostContent = event => {
+                    event.preventDefault();
+                    this.setState({
+                        postContent: event.target.value
+                    });
+                }
+
+                edited = event => {
+                    event.preventDefault();
+                    if (this.state.postContent === "") {
+                        alert("Edited post must not be empty.")
+                    } else if (this.state.postContent.length > 280) {
+                        alert("Edited post maximum length is 280 characters.")
+                    } else {
+                        fetch(`/post/${this.props.postID}`, {
+                            method: "PUT",
+                            body: JSON.stringify({
+                                post_content: this.state.postContent,
+                            })
+                        })
+                        .then(this.setState({
+                            editing: false
+                        }))
+                        .catch(error => console.log('Error:', error));
+                    }
                 }
             }
 
@@ -386,6 +455,16 @@
                     .catch(error => console.log('Error:', error));
                 }
 
+                updateProfile = () => {
+                    const api = `/profile/${this.props.username}`;
+                    fetch(api)
+                    .then(response => response.json())
+                    .then(data => this.setState({
+                        response: data
+                    }))
+                    .catch(error => console.log('Error:', error));
+                }
+
                 render () {
                     const profile = this.state.response;
                     const username = this.props.username;
@@ -398,7 +477,8 @@
                             <div className="row">
                                 <div className="col">
                                     <h1 id="profile-title">{`${username}'s profile`}</h1>
-                                    <FollowButton followedByUser={followedByUser} username={username} key={username}/>
+                                    <FollowButton followedByUser={followedByUser} username={username} 
+                                                  updateProfile={this.updateProfile} key={`${username}-${numberOfFollowers}-${numberOfFollowed}`}/>
                                 </div>
                             </div>
                             <div className="row pt-2">
@@ -531,7 +611,7 @@
                         <div>
                             <Navbar displayAllPosts = {this.displayAllPosts} displayFollowing = {this.displayFollowing} displayProfile = {this.displayProfile} />
                             <Profile username={this.state.profileUsername} />
-                            <PostBox postBox = "profile" username={this.state.profileUsername} key={`profile${this.state.profileUsername}`} displayProfile = {this.displayProfile} />
+                            <PostBox postBox = "profile" username={this.state.profileUsername} displayProfile = {this.displayProfile} key={`profile${this.state.profileUsername}`} />
                         </div>
                     );
                 }

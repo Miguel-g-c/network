@@ -112,10 +112,15 @@ def post(request, post_id):
                 post.likes.add(request.user)
             else:
                 post.likes.remove(request.user)
-            post.save()
-            return HttpResponse(status=204)
+            
+        elif data.get('post_content') is not None:
+            post.post = data.get('post_content')
+            
         else:
             return HttpResponse(status=406)
+
+        post.save()
+        return HttpResponse(status=204)
 
     # Post must be via GET or PUT
     else:

@@ -50,4 +50,5 @@
 
 #profile-link {
     cursor: pointer;
+    display: inline;
 }
